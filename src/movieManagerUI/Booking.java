@@ -45,8 +45,7 @@ public class Booking extends JFrame {
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
         container.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         container.setBackground(Color.WHITE);
-        
-  
+      
         
         container.add(row("Chọn phim:", filmCbo));
         container.add(row("Chọn suất chiếu:", timeCbo));
@@ -74,7 +73,8 @@ public class Booking extends JFrame {
         filmCbo.addActionListener(e -> reloadTimes());
         reloadTimes();
 
-        submitBtn.addActionListener(e -> {
+     
+        submitBtn.addActionListener(e -> {	
             if (validateInput()) {
                 List<String> selectedSeats = getSelectedSeats();
                 if (selectedSeats.isEmpty()) {
@@ -94,14 +94,14 @@ public class Booking extends JFrame {
         });
     }
 
-    private JPanel row(String label, JComponent field) {
+    private JPanel row(String label, JComponent field) { // create a row with label and field
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         panel.add(new JLabel(label));
         panel.add(field);
         return panel; 
     }
 
-    public void createSeats() {
+    public void createSeats() { // create 30 seats
         seatButtons.clear();
         seatPanel.removeAll();
         int rows = 5;
@@ -119,7 +119,7 @@ public class Booking extends JFrame {
         }
     }
 
-    private List<String> getSelectedSeats() {
+    private List<String> getSelectedSeats() { // get selected seats
         List<String> selected = new ArrayList<>();
         for (JToggleButton btn : seatButtons) {
             if (btn.isSelected()) {
@@ -129,21 +129,37 @@ public class Booking extends JFrame {
         return selected;
     }
 
-    private void reloadTimes() {
+    private void reloadTimes() { // reload times based on selected film
         String film = (String) filmCbo.getSelectedItem();
         timeCbo.setModel(new DefaultComboBoxModel<>(demoTimes.get(film)));
         timeCbo.setSelectedIndex(0);
     }
 
-    private boolean validateInput() {
-        if (nameTxt.getText().isBlank() || phoneTxt.getText().isBlank()) {
+    private boolean validateInput() { // validate input fields
+        String name = nameTxt.getText().trim();
+        String phone = phoneTxt.getText().trim();
+        String email = emailTxt.getText().trim();
+
+        if (name.isEmpty() || phone.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Tên và SĐT bắt buộc!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return false;
         }
+
+        if (!phone.matches("\\d{10}")) {
+            JOptionPane.showMessageDialog(this, "SĐT phải gồm đúng 10 chữ số!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        if (!email.isEmpty() && !email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,6}$")) {
+            JOptionPane.showMessageDialog(this, "Email không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
         return true;
     }
 
-    private void clearInput() {
+
+    private void clearInput() { // clear input fields and selected seats
         emailTxt.setText("");
         phoneTxt.setText("");
         nameTxt.setText("");
