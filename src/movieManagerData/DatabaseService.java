@@ -9,7 +9,7 @@ public class DatabaseService {
 
     private static final String URL = "jdbc:mysql://mysql-2322d47c-ahmobile17022005-692f.l.aivencloud.com:11057/javaMovie?ssl-mode=REQUIRED";
     private static final String USER = "avnadmin";
-    private static final String PASSWORD = "AVNS_aj_L9smK1NTteHbPJQE"; 
+    
     private static Connection connection;
     static {
         try {
