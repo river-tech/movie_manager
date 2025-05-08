@@ -2,6 +2,11 @@ package movieManagerUI;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import movieManagerData.MovieService;
+import movieManagerModel.Movie;
+import movieManagerModel.ShowMovieDTO;
+
+import java.sql.Timestamp;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.SimpleDateFormat;
@@ -21,17 +26,18 @@ public class NewMovie extends JFrame {
     private final JTable table;
 
     private final boolean isEditMode;
-    private final String editingFilmName;
+    private final String editingFilmId;
 
     private final List<String> showtimes = new ArrayList<>();
+    private final MovieService movieService = new MovieService();
 
     public NewMovie() {
         this(null);
     }
 
-    public NewMovie(String filmToEdit) {
-        this.isEditMode = (filmToEdit != null);
-        this.editingFilmName = filmToEdit;
+    public NewMovie(String filmIdToEdit) {
+        this.isEditMode = (filmIdToEdit != null);
+        this.editingFilmId = filmIdToEdit;
 
         setTitle(isEditMode ? "Sửa phim" : "Tạo phim mới");
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -45,7 +51,7 @@ public class NewMovie extends JFrame {
 
         JPanel nameRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
         nameRow.add(new JLabel("Tên phim"));
-        nameRow.add(filmNameField);
+        nameRow.add(filmNameField); 
         formPanel.add(nameRow);
 
         JPanel timeRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -82,9 +88,21 @@ public class NewMovie extends JFrame {
         add(btnPanel, BorderLayout.SOUTH);
 
         if (isEditMode) {
-            filmNameField.setText(editingFilmName);
-            filmNameField.setEditable(false);
-            loadShowtimes(editingFilmName);
+            ShowMovieDTO dto = movieService.ShowMovieById(Integer.parseInt(editingFilmId));
+            if (dto != null) {
+                filmNameField.setText(dto.getName());
+                // Cho phép sửa tên phim
+                filmNameField.setEditable(true);
+
+                showtimes.clear();
+                tableModel.setRowCount(0);
+                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                for (Timestamp ts : dto.getMovieTimes()) {
+                    String formatted = formatter.format(ts);
+                    showtimes.add(formatted);
+                    tableModel.addRow(new Object[]{formatted, "Xóa"});
+                }
+            }
         }
 
         addTimeBtn.addActionListener(e -> {
@@ -100,9 +118,10 @@ public class NewMovie extends JFrame {
         });
 
         cancelBtn.addActionListener(e -> {
-        	this.dispose();
-        	new MovieManager().setVisible(true);
+            this.dispose();
+            new MovieManager().setVisible(true);
         });
+
         saveBtn.addActionListener(e -> {
             String name = filmNameField.getText().trim();
             if (name.isEmpty()) {
@@ -120,35 +139,60 @@ public class NewMovie extends JFrame {
                 } else {
                     saveNewMovie(name);
                 }
+                new MovieManager().setVisible(true);
                 dispose();
             }
         });
     }
 
-    private void loadShowtimes(String film) {
-        showtimes.clear();
-        tableModel.setRowCount(0);
-        showtimes.add("01/05/2025 18:00");
-        showtimes.add("01/05/2025 15:00");
-        showtimes.add("01/05/2025 12:00");
-        showtimes.add("01/05/2025 09:00");
-        for (String time : showtimes) {
-            tableModel.addRow(new Object[]{time, "Xóa"});
+    private void saveNewMovie(String name) {
+        List<Timestamp> timestamps = new ArrayList<>();
+        for (String timeStr : showtimes) {
+            try {
+                Timestamp ts = Timestamp.valueOf(
+                    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(
+                        new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(timeStr)
+                    )
+                );
+                timestamps.add(ts);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        boolean success = movieService.createNewMovie(name, timestamps);
+        if (success) {
+            JOptionPane.showMessageDialog(this, "✅ Đã thêm phim: " + name);
+        } else {
+            JOptionPane.showMessageDialog(this, "❌ Lỗi khi thêm phim!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void saveNewMovie(String name) {
-        JOptionPane.showMessageDialog(this, "Đã thêm phim mới: " + name + "\nSuất chiếu: " + showtimes);
-    }
-
     private void updateMovie(String name) {
-        JOptionPane.showMessageDialog(this, "Đã cập nhật phim: " + name + "\nSuất chiếu: " + showtimes);
+        List<Timestamp> timestamps = new ArrayList<>();
+        for (String timeStr : showtimes) {
+            try {
+                Timestamp ts = Timestamp.valueOf(
+                    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(
+                        new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(timeStr)
+                    )
+                );
+                timestamps.add(ts);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        int movieId = Integer.parseInt(editingFilmId);
+        boolean success = movieService.editMovie(movieId, name, timestamps);
+        if (success) {
+            JOptionPane.showMessageDialog(this, "✅ Đã cập nhật phim: " + name);
+        } else {
+            JOptionPane.showMessageDialog(this, "❌ Lỗi khi cập nhật phim!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new NewMovie().setVisible(true));
-    }
-
+    
     private static class ButtonRenderer extends JButton implements javax.swing.table.TableCellRenderer {
         public ButtonRenderer() {
             setText("Xóa");
