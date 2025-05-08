@@ -7,9 +7,10 @@ import java.sql.SQLException;
 
 public class DatabaseService {  
 
-    private static final String URL = "jdbc:mysql://mysql-2322d47c-ahmobile17022005-692f.l.aivencloud.com:11057/javaMovie?ssl-mode=REQUIRED";
-    private static final String USER = "avnadmin";
-    
+   private static final Dotenv dotenv = Dotenv.load();
+    private static final String URL = dotenv.get("DB_URL");
+    private static final String USER = dotenv.get("DB_USER");
+    private static final String PASSWORD = dotenv.get("DB_PASSWORD");
     private static Connection connection;
     static {
         try {
