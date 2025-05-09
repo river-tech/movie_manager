@@ -84,7 +84,7 @@ public class Booking extends JFrame {
             model.addElement(m);
         }
         filmCbo.setModel(model); 
-        filmCbo.setSelectedIndex(1);
+        filmCbo.setSelectedIndex(0);
         reloadTimes();
         filmCbo.addActionListener(e -> reloadTimes());
         timeCbo.addActionListener(e -> {
